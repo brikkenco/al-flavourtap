@@ -101,6 +101,34 @@
     .circle-btn.blue-btn { background: var(--blue); }
     .circle-btn.blue-btn::after { box-shadow: inset 0px -4px 4px 0px #a6c8ef, inset 0px 4px 4px 0px #dce9f8; }
 
+    /* ─── Selected bar (size breadcrumb above flavour screen) ─── */
+    .selected-bar {
+      display: flex; gap: 16px; align-items: center; justify-content: center;
+      position: absolute; top: 32px; left: 0; right: 0; z-index: 5;
+    }
+    .selected-pill {
+      width: 80px; height: 80px; border-radius: 50%;
+      overflow: hidden; box-shadow: var(--btn-shadow-sm);
+      display: flex; align-items: center; justify-content: center;
+      position: relative; cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .selected-pill:hover  { transform: scale(1.08); }
+    .selected-pill:active { transform: scale(0.92); }
+    .selected-pill img { width: 100%; height: 100%; object-fit: contain; }
+    .selected-pill.has-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .selected-pill::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+      box-shadow: inset 0px -2px 2px 0px rgba(166,208,247,0.6), inset 0px 2px 2px 0px rgba(213,233,251,0.6);
+    }
+    .selected-pill.pill-enter {
+      animation: pillShrinkIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes pillShrinkIn {
+      0%   { transform: scale(1.6) translateY(40px); opacity: 0.4; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
     .option-label {
       font-size: 16px; font-weight: 800; color: var(--navy);
       text-align: center; text-transform: uppercase; line-height: 1.2;
@@ -247,6 +275,72 @@
       will-change: clip-path, opacity;
     }
 
+    /* ─── App-level video backdrop (enhance screen) ─── */
+    #app-video {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; pointer-events: none;
+      clip-path: circle(0px at 50% 795px);
+      transition: clip-path 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #app-video.video-revealed { clip-path: circle(1050px at 50% 795px); }
+    #app-video.video-exit {
+      clip-path: circle(0px at 50% 795px);
+      transition: clip-path 0.5s ease-in;
+    }
+
+    /* ─── Enhance Screen ─── */
+    #screen-enhance { background: transparent !important; gap: 32px; overflow: hidden; }
+    .enhance-title {
+      font-size: 32px; font-weight: 700; color: var(--white);
+      text-align: center; line-height: 1.2; z-index: 1;
+    }
+    .enhance-subtitle {
+      font-size: 16px; font-weight: 400; color: rgba(255,255,255,0.55);
+      text-align: center; margin-top: -14px; z-index: 1;
+    }
+    .enhance-options {
+      display: flex; gap: 28px; align-items: stretch; justify-content: center; z-index: 1;
+    }
+    .enhance-card {
+      width: 240px; height: 200px; background: var(--white); border-radius: 24px;
+      padding: 24px; display: flex; flex-direction: column; justify-content: space-between;
+      cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0px 8px 24px rgba(0,0,0,0.12); position: relative;
+    }
+    .enhance-card:hover { transform: scale(1.03); }
+    .enhance-card:active { transform: scale(0.97); }
+    .enhance-card.selected { box-shadow: 0px 0px 0px 3px var(--white), 0px 8px 24px rgba(0,0,0,0.2); }
+    .enhance-card-icon {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--navy); display: flex; align-items: center; justify-content: center;
+    }
+    .enhance-card-icon svg { width: 24px; height: 24px; color: var(--white); }
+    .enhance-card-label {
+      font-size: 18px; font-weight: 800; color: var(--navy);
+      text-transform: uppercase; line-height: 1.15;
+    }
+    .enhance-no-thanks {
+      padding: 16px 56px; border-radius: 100px;
+      background: transparent; border: 2px solid rgba(255,255,255,0.4);
+      color: var(--white); font-size: 16px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      cursor: pointer; transition: background 0.2s ease, border-color 0.2s ease; z-index: 1;
+    }
+    .enhance-no-thanks:hover  { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.6); }
+    .enhance-no-thanks:active { background: rgba(255,255,255,0.12); }
+    @keyframes enhanceContentIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    #screen-enhance .enhance-title,
+    #screen-enhance .enhance-subtitle,
+    #screen-enhance .enhance-options,
+    #screen-enhance .enhance-no-thanks { opacity: 0; }
+    #screen-enhance.entered .enhance-title    { animation: enhanceContentIn 0.4s ease 0.05s both; }
+    #screen-enhance.entered .enhance-subtitle { animation: enhanceContentIn 0.4s ease 0.1s  both; }
+    #screen-enhance.entered .enhance-options  { animation: enhanceContentIn 0.4s ease 0.18s both; }
+    #screen-enhance.entered .enhance-no-thanks{ animation: enhanceContentIn 0.4s ease 0.25s both; }
+
     /* ─── Pouring Screen ─── */
     #screen-pouring { background: #C5DBFC !important; padding: 0; }
     #screen-pouring.exit-left, #screen-pouring.exit-right { transition: none; }
@@ -351,28 +445,55 @@
       animation: pulse 2s ease-in-out infinite; margin-top: 16px;
     }
     @keyframes pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.8; } }
+
+    /* ─── Idle demo overlay ─── */
+    #demo-overlay {
+      position: absolute; inset: 0; z-index: 400;
+      background: #000;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+    #demo-overlay.active { opacity: 1; pointer-events: auto; cursor: pointer; }
+    #demo-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   </style>
 </head>
 <body>
   <div id="app">
+    <video id="app-video" autoplay loop muted playsinline src="../../images/AL-backdrop.mp4"></video>
     <div id="pour-ripple"></div>
     <video id="pour-backdrop" src="../../images/AL-backdrop.mp4" loop muted playsinline preload="auto" style="display:none"></video>
+
+    <!-- ══════ IDLE DEMO OVERLAY ══════ -->
+    <div id="demo-overlay">
+      <video id="demo-video" src="../../images/stillonly-demo.mp4" muted playsinline loop></video>
+    </div>
 
     <!-- ══════ 0. SCREENSAVER ══════ -->
     <div id="screen-screensaver" class="screen active">
       <a href="../../index.html" class="screensaver-home-link"></a>
       <video id="screensaver-video" autoplay loop muted playsinline src="../../images/aqualibra screensaver.mp4"></video>
-      <button class="get-started-btn" onclick="goTo('screen-flavour')">GET STARTED</button>
+      <button class="get-started-btn" onclick="goTo('screen-size')">GET STARTED</button>
     </div>
 
-    <!-- ══════ 1. FLAVOUR ══════ -->
-    <div id="screen-flavour" class="screen">
+    <!-- ══════ 1. SIZE ══════ -->
+    <div id="screen-size" class="screen">
       <button class="confirm-back-btn" style="position:absolute; top:40px; left:40px;" onclick="goTo('screen-screensaver')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
         </svg>
       </button>
-      <div class="screen-title">Select your drink</div>
+      <div class="screen-title">Select your drink size</div>
+      <div class="options-row" id="size-options"></div>
+    </div>
+
+    <!-- ══════ 2. FLAVOUR ══════ -->
+    <div id="screen-flavour" class="screen">
+      <button class="confirm-back-btn" style="position:absolute; top:40px; left:40px;" onclick="goTo('screen-size')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div class="screen-title">Add your flavour</div>
       <div class="options-row" id="flavour-options"></div>
     </div>
 
@@ -416,7 +537,34 @@
       </div>
     </div>
 
-    <!-- ══════ 3. POURING ══════ -->
+    <!-- ══════ 3. ENHANCE ══════ -->
+    <div id="screen-enhance" class="screen">
+      <div class="enhance-title">Supercharge your water</div>
+      <div class="enhance-subtitle">Add an optional boost before you pour</div>
+      <div class="enhance-options">
+        <div class="enhance-card" id="enhance-electrolytes" onclick="selectEnhance('electrolytes')">
+          <div class="enhance-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          </div>
+          <div class="enhance-card-label">Add<br>Electrolytes</div>
+        </div>
+        <div class="enhance-card" id="enhance-vitamins" onclick="selectEnhance('vitamins')">
+          <div class="enhance-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          </div>
+          <div class="enhance-card-label">Add<br>Vitamins</div>
+        </div>
+        <div class="enhance-card" id="enhance-bvitamins" onclick="selectEnhance('bvitamins')">
+          <div class="enhance-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          </div>
+          <div class="enhance-card-label">Add<br>B Vitamins</div>
+        </div>
+      </div>
+      <div class="enhance-no-thanks" onclick="selectEnhance('none')">No Thanks</div>
+    </div>
+
+    <!-- ══════ 4. POURING ══════ -->
     <div id="screen-pouring" class="screen">
       <canvas id="pour-canvas"></canvas>
       <div id="pour-text">Your drink is being poured</div>
@@ -568,8 +716,66 @@
       });
     })();
 
+    // ─── Size icons (still water only) ───
+    const stillSizeIcons = {
+      '250': '../../images/still 250.png',
+      '500': '../../images/still 500.png',
+      '750': '../../images/still 750.png',
+    };
+
+    // Build size buttons on screen load
+    (function buildSizeScreen() {
+      const row = document.getElementById('size-options');
+      ['250', '500', '750'].forEach(s => {
+        const col = document.createElement('div');
+        col.className = 'option-col';
+        col.onclick = () => selectSize(s);
+
+        const btn = document.createElement('div');
+        btn.className = 'circle-btn still-btn';
+        const img = document.createElement('img');
+        img.src = stillSizeIcons[s];
+        img.alt = s + 'ml';
+        img.className = 'photo';
+        btn.appendChild(img);
+
+        const label = document.createElement('div');
+        label.className = 'option-label';
+        label.textContent = s + ' ML';
+
+        col.appendChild(btn);
+        col.appendChild(label);
+        row.appendChild(col);
+      });
+    })();
+
+    // ─── Selected bar helper ───
+    function buildSelectedBar(containerId, items) {
+      const bar = document.getElementById(containerId);
+      bar.innerHTML = '';
+      items.forEach(item => {
+        const pill = document.createElement('div');
+        pill.className = 'selected-pill' + (item.isPhoto ? ' has-photo' : '') + (item.isNew ? ' pill-enter' : '');
+        pill.style.background = item.bg;
+        if (item.icon) {
+          const img = document.createElement('img');
+          img.src = item.icon;
+          img.alt = '';
+          pill.appendChild(img);
+        }
+        if (item.goBack) pill.onclick = () => goTo(item.goBack);
+        bar.appendChild(pill);
+      });
+    }
+
+    // ─── Select Size → Flavour ───
+    function selectSize(size) {
+      currentSize = size;
+      goTo('screen-flavour');
+    }
+
     // ─── Navigation ───
-    const screenOrder = ['screen-screensaver', 'screen-flavour', 'screen-confirm', 'screen-pouring', 'screen-done'];
+    const screenOrder = ['screen-screensaver', 'screen-size', 'screen-flavour', 'screen-confirm', 'screen-enhance', 'screen-pouring', 'screen-done'];
 
     function goTo(screenId) {
       if (transitioning) return;
@@ -635,7 +841,7 @@
       goTo('screen-confirm');
     }
 
-    // ─── Confirm → ripple expand → Pouring wave animation ───
+    // ─── Confirm → ripple expand → Enhance ───
     function startPour() {
       if (transitioning) return;
       transitioning = true;
@@ -643,7 +849,8 @@
       const btn     = document.querySelector('.pour-btn');
       const ripple  = document.getElementById('pour-ripple');
       const confirm = document.getElementById('screen-confirm');
-      const pouring = document.getElementById('screen-pouring');
+      const enhance = document.getElementById('screen-enhance');
+      const vid     = document.getElementById('app-video');
 
       btn.querySelector('.pour-btn-text').style.opacity = '0';
       btn.style.pointerEvents = 'none';
@@ -655,23 +862,28 @@
       ripple.offsetHeight;
 
       ripple.style.transition = 'clip-path 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
-      requestAnimationFrame(() => {
-        ripple.style.clipPath = 'circle(1200px at 50% 795px)';
-      });
+      requestAnimationFrame(() => { ripple.style.clipPath = 'circle(1200px at 50% 795px)'; });
 
-      // 2. Once ripple covers the screen, swap to pouring screen
+      // 2. Once ripple covers the screen, reveal enhance over the video backdrop
       setTimeout(() => {
-        [confirm, pouring].forEach(el => el.style.transition = 'none');
-        confirm.classList.remove('active');
-        pouring.classList.add('active');
-        pouring.offsetHeight;
-        [confirm, pouring].forEach(el => el.style.transition = '');
-        currentScreen = 'screen-pouring';
+        enhance.classList.remove('entered');
 
-        // 3. Fade out ripple to reveal the canvas (which starts fully navy)
-        ripple.style.transition = 'opacity 0.3s ease';
+        [confirm, enhance, vid].forEach(el => el.style.transition = 'none');
+        vid.style.clipPath = ''; // clear any inline override so the class takes effect
+        vid.classList.remove('video-exit');
+        vid.classList.add('video-revealed');
+        confirm.classList.remove('active');
+        enhance.classList.add('active');
+        enhance.offsetHeight;
+        [confirm, enhance, vid].forEach(el => el.style.transition = '');
+
+        currentScreen = 'screen-enhance';
+
+        // 3. Fade ripple out as enhance content animates in
+        ripple.style.transition = 'opacity 0.45s ease';
         requestAnimationFrame(() => requestAnimationFrame(() => {
           ripple.style.opacity = '0';
+          enhance.classList.add('entered');
         }));
 
         setTimeout(() => {
@@ -681,14 +893,44 @@
           btn.querySelector('.pour-btn-text').style.opacity = '';
           btn.style.pointerEvents = '';
           transitioning = false;
-        }, 400);
-
-        // 4. Start wave animation
-        beginPourAnimation();
-
-        // Navigation back to screensaver is triggered from within
-        // beginPourAnimation() once the ready text appears.
+        }, 550);
       }, 620);
+    }
+
+    // ─── Enhance: select boost → kick off pour ───
+    let currentEnhance = 'none';
+
+    function selectEnhance(type) {
+      currentEnhance = type;
+
+      const enhance = document.getElementById('screen-enhance');
+      const pouring = document.getElementById('screen-pouring');
+      const vid     = document.getElementById('app-video');
+
+      document.querySelectorAll('.enhance-card').forEach(el => el.classList.remove('selected'));
+      if (type !== 'none') document.getElementById('enhance-' + type).classList.add('selected');
+
+      // After card-tap feedback, activate the pouring canvas immediately on top
+      // (canvas starts all-navy so it's invisible against the dark background),
+      // then remove the enhance screen — transition looks seamless.
+      setTimeout(() => {
+        // Activate pouring screen (it sits on top in DOM)
+        pouring.classList.add('active');
+        currentScreen = 'screen-pouring';
+
+        // Start the wave drop-in animation right away
+        beginPourAnimation(true);
+
+        // Remove enhance + video backdrop a frame later (hidden behind the canvas)
+        requestAnimationFrame(() => {
+          enhance.classList.remove('active', 'entered');
+          vid.style.transition = 'none';
+          vid.style.clipPath   = '';
+          vid.classList.remove('video-revealed', 'video-exit');
+          vid.offsetHeight;
+          vid.style.transition = '';
+        });
+      }, 400);
     }
 
     // ─── Wave pour animation ───
@@ -713,7 +955,7 @@
       return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
     }
 
-    function beginPourAnimation() {
+    function beginPourAnimation(dropIn) {
       const canvas      = document.getElementById('pour-canvas');
       const ctx         = canvas.getContext('2d');
       const pourText    = document.getElementById('pour-text');
@@ -733,18 +975,24 @@
       circlemark.classList.remove('light');
 
       pourAnimActive = true;
-      pourAnimStart  = null;   // wave doesn't move until this is set
-      let fillLevel  = 1.0;
+      let fillLevel  = dropIn ? 1.15 : 1.0;   // drop-in starts wave above screen
       let poured     = false;
 
-      // Stats + mark start light (wave covers them from the top immediately)
+      // Stats + mark start light (wave covers them from the top)
       statLeft.classList.add('light');
       statRight.classList.add('light');
       circlemark.classList.add('light');
 
-      // Text fades in at 300ms, then hold 2s before wave starts draining
-      setTimeout(() => { pourText.classList.add('visible'); }, 300);
-      setTimeout(() => { pourAnimStart = performance.now(); }, 2300);
+      if (dropIn) {
+        // Wave drops in immediately; text appears once it's visibly on screen
+        pourAnimStart = performance.now();
+        setTimeout(() => { pourText.classList.add('visible'); }, 800);
+      } else {
+        // Normal flow: text first, then 2s hold before draining
+        pourAnimStart = null;
+        setTimeout(() => { pourText.classList.add('visible'); }, 300);
+        setTimeout(() => { pourAnimStart = performance.now(); }, 3300);
+      }
 
       function syncColors() {
         const waveTopY = (1 - fillLevel) * 600;
@@ -765,7 +1013,10 @@
         const sec      = now * 0.001;
         const progress = pourAnimStart ? Math.min(1, (now - pourAnimStart) / POUR_DURATION) : 0;
 
-        fillLevel = 1.0 - easeInOut(progress) * 1.08;
+        // drop-in: 1.15 → -0.08 (range 1.23); normal: 1.0 → -0.08 (range 1.08)
+        fillLevel = dropIn
+          ? 1.15 - easeInOut(progress) * 1.23
+          : 1.0  - easeInOut(progress) * 1.08;
         syncColors();
 
         // Draw background
@@ -779,11 +1030,11 @@
           // Back wave — semi-transparent navy
           const back = waveLayers[1];
           ctx.beginPath();
-          ctx.moveTo(0, baseY - 600 * 0.025 + waveY(0, back, sec));
-          for (let x = 3; x <= 1024; x += 3) {
+          ctx.moveTo(-2, baseY - 600 * 0.025 + waveY(0, back, sec));
+          for (let x = 3; x <= 1026; x += 3) {
             ctx.lineTo(x, baseY - 600 * 0.025 + waveY(x, back, sec));
           }
-          ctx.lineTo(1024, 600); ctx.lineTo(0, 600);
+          ctx.lineTo(1026, 602); ctx.lineTo(-2, 602);
           ctx.closePath();
           ctx.fillStyle = 'rgba(13,79,146,0.45)';
           ctx.fill();
@@ -792,11 +1043,11 @@
           const front = waveLayers[0];
           ctx.save();
           ctx.beginPath();
-          ctx.moveTo(0, baseY + waveY(0, front, sec));
-          for (let x = 3; x <= 1024; x += 3) {
+          ctx.moveTo(-2, baseY + waveY(0, front, sec));
+          for (let x = 3; x <= 1026; x += 3) {
             ctx.lineTo(x, baseY + waveY(x, front, sec));
           }
-          ctx.lineTo(1024, 600); ctx.lineTo(0, 600);
+          ctx.lineTo(1026, 602); ctx.lineTo(-2, 602);
           ctx.closePath();
           ctx.clip();
           if (video.readyState >= 2) {
@@ -805,7 +1056,7 @@
           } else {
             ctx.fillStyle = '#0D4F92';
           }
-          ctx.fillRect(0, 0, 1024, 600);
+          ctx.fillRect(-2, 0, 1028, 602);
           ctx.restore();
         }
 
@@ -843,6 +1094,75 @@
       }
       return _goTo(id);
     };
+    // ─── Idle demo playback ───
+    const IDLE_TIMEOUT = 30000;
+    let idleTimer = null;
+
+    function showDemo() {
+      const overlay = document.getElementById('demo-overlay');
+      const video   = document.getElementById('demo-video');
+      video.currentTime = 0;
+      video.play().catch(() => {});
+      overlay.classList.add('active');
+    }
+
+    function hideDemo() {
+      const overlay = document.getElementById('demo-overlay');
+      const video   = document.getElementById('demo-video');
+      overlay.classList.remove('active');
+      video.pause();
+      video.currentTime = 0;
+
+      // Stop any in-progress pour animation
+      pourAnimActive = false;
+      if (pourTimer) { clearTimeout(pourTimer); pourTimer = null; }
+
+      // Reset enhance screen and video backdrop
+      const vid = document.getElementById('app-video');
+      vid.style.transition = 'none';
+      vid.style.clipPath   = ''; // clear any inline override
+      vid.classList.remove('video-revealed', 'video-exit');
+      vid.offsetHeight;
+      vid.style.transition = '';
+      document.getElementById('screen-enhance').classList.remove('entered');
+      document.querySelectorAll('.enhance-card').forEach(el => el.classList.remove('selected'));
+
+      // Force-reset all screens and jump straight to screensaver
+      transitioning = false;
+      document.querySelectorAll('.screen').forEach(s => {
+        s.classList.remove('active', 'exit-left', 'exit-right', 'from-right', 'from-left');
+        s.style.transition = '';
+      });
+      // Also clean up pour-text / stats in case we interrupted mid-pour
+      document.getElementById('pour-text').classList.remove('visible', 'dark');
+      document.getElementById('pour-ready-text').classList.remove('visible');
+      document.getElementById('pour-stat-left').classList.remove('light');
+      document.getElementById('pour-stat-right').classList.remove('light');
+      document.getElementById('pour-circlemark').classList.remove('light');
+
+      document.getElementById('screen-screensaver').classList.add('active');
+      currentScreen = 'screen-screensaver';
+
+      resetIdleTimer();
+    }
+
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(showDemo, IDLE_TIMEOUT);
+    }
+
+    // Dismiss demo on any interaction with the overlay
+    const demoOverlay = document.getElementById('demo-overlay');
+    demoOverlay.addEventListener('click',      hideDemo);
+    demoOverlay.addEventListener('touchstart', hideDemo, { passive: true });
+
+    // Reset idle timer on any user activity
+    ['mousemove', 'mousedown', 'touchstart', 'keydown'].forEach(evt => {
+      document.addEventListener(evt, resetIdleTimer, { passive: true });
+    });
+
+    // Kick off the idle timer
+    resetIdleTimer();
   </script>
 </body>
 </html>
