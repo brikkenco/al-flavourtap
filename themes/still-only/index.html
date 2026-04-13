@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1024, initial-scale=1.0">
+  <title>Aqua Libra – Still Only</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --navy: #0D4F92;
+      --navy-900: #001C30;
+      --still: #B8DAF9;
+      --aqua: #CBF6F2;
+      --blush: #FCCCD5;
+      --blue: #C5DBFC;
+      --grey: #FAFAFA;
+      --white: #FFFFFF;
+      --green: #D1F684;
+      --orange: #F5C8A0;
+      --purple: #D4C5E8;
+      --pink: #FAAFC0;
+      --btn-shadow: 0px 23px 6px 0px rgba(140,164,186,0), 0px 15px 6px 0px rgba(140,164,186,0.03), 0px 8px 5px 0px rgba(140,164,186,0.1), 0px 4px 4px 0px rgba(140,164,186,0.17), 0px 1px 2px 0px rgba(140,164,186,0.2);
+      --btn-shadow-sm: 0px 13px 3px 0px rgba(140,164,186,0), 0px 9px 3px 0px rgba(140,164,186,0.03), 0px 5px 3px 0px rgba(140,164,186,0.1), 0px 2px 2px 0px rgba(140,164,186,0.17), 0px 1px 1px 0px rgba(140,164,186,0.2);
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      font-family: 'DM Sans', 'Sofia Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #2C2C2C;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #app { width: 1024px; height: 600px; position: relative; overflow: hidden; margin: 0 auto; background: var(--grey); }
+
+    /* ─── Screen Base ─── */
+    .screen {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      transform: translateX(0);
+      background: var(--grey);
+    }
+    .screen.active { opacity: 1; pointer-events: auto; transform: translateX(0); }
+    /* Forward: exit slides left, enter from right */
+    .screen.exit-left  { opacity: 0; transform: translateX(-120px); }
+    .screen.from-right { transform: translateX(120px); opacity: 0; }
+    /* Backward: exit slides right, enter from left */
+    .screen.exit-right { opacity: 0; transform: translateX(120px); }
+    .screen.from-left  { transform: translateX(-120px); opacity: 0; }
+
+    /* ─── Selection Screens (Flavour) ─── */
+    .screen-title {
+      font-size: 28px; font-weight: 600; color: var(--navy);
+      text-align: center; margin-bottom: 40px; line-height: 1.2;
+    }
+
+    .options-row {
+      display: flex; gap: 40px; align-items: flex-start; justify-content: center;
+    }
+
+    .option-col {
+      display: flex; flex-direction: column; align-items: center; gap: 23px;
+      width: 140px; cursor: pointer;
+    }
+    .option-col:active .circle-btn { transform: scale(0.93); }
+
+    .circle-btn {
+      width: 140px; height: 140px; border-radius: 50%;
+      overflow: hidden; position: relative;
+      box-shadow: var(--btn-shadow);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.2s ease;
+    }
+    .circle-btn img {
+      width: 100%; height: 100%; object-fit: contain;
+      position: relative; z-index: 1;
+    }
+    .circle-btn .photo {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .circle-btn::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2;
+    }
+    .circle-btn.still-btn { background: var(--still); }
+    .circle-btn.still-btn::after { box-shadow: inset 0px -4px 4px 0px #a6d0f7, inset 0px 4px 4px 0px #d5e9fb; }
+    .circle-btn.pink-btn { background: var(--pink); }
+    .circle-btn.pink-btn::after { box-shadow: inset 0px -4px 4px 0px #f59aae, inset 0px 4px 4px 0px #fdd5de; }
+    .circle-btn.orange-btn { background: var(--orange); }
+    .circle-btn.orange-btn::after { box-shadow: inset 0px -4px 4px 0px #e8b88e, inset 0px 4px 4px 0px #fbe0c8; }
+    .circle-btn.purple-btn { background: var(--purple); }
+    .circle-btn.purple-btn::after { box-shadow: inset 0px -4px 4px 0px #c3b0d8, inset 0px 4px 4px 0px #e6dcf0; }
+    .circle-btn.green-btn { background: var(--green); }
+    .circle-btn.green-btn::after { box-shadow: inset 0px -4px 4px 0px #bce060, inset 0px 4px 4px 0px #e4f4b0; }
+    .circle-btn.blue-btn { background: var(--blue); }
+    .circle-btn.blue-btn::after { box-shadow: inset 0px -4px 4px 0px #a6c8ef, inset 0px 4px 4px 0px #dce9f8; }
+
+    .option-label {
+      font-size: 16px; font-weight: 800; color: var(--navy);
+      text-align: center; text-transform: uppercase; line-height: 1.2;
+    }
+
+    /* ─── Confirm Screen ─── */
+    #screen-confirm {
+      flex-direction: row; align-items: stretch; justify-content: flex-start;
+      padding: 0; overflow: hidden;
+    }
+    .confirm-left {
+      flex: 0 0 512px; padding: 40px 48px 0; display: flex; flex-direction: column;
+      position: relative; overflow-y: auto; z-index: 20;
+    }
+
+    /* Header row: back button + title */
+    .confirm-header {
+      display: flex; align-items: center; gap: 20px;
+      margin-bottom: 20px; flex-shrink: 0;
+    }
+    .confirm-back-btn {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: transparent; border: 2px solid var(--navy);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: transform 0.15s ease;
+      flex-shrink: 0;
+      backdrop-filter: blur(2.3px);
+    }
+    .confirm-back-btn:hover { transform: scale(1.08); }
+    .confirm-back-btn:active { transform: scale(0.92); }
+    .confirm-back-btn svg { width: 18px; height: 18px; color: var(--navy); }
+
+    .confirm-title-block { display: flex; flex-direction: column; gap: 0; }
+    .confirm-flavour-label {
+      font-size: 24px; font-weight: 800; color: var(--navy); line-height: 1.15;
+      text-transform: uppercase;
+    }
+    .confirm-type-label {
+      font-size: 24px; font-weight: 800; color: var(--navy); line-height: 1.15;
+      text-transform: uppercase;
+    }
+
+    .confirm-divider { width: 100%; height: 2px; background: var(--navy); flex-shrink: 0; }
+
+    .confirm-details { display: flex; flex-direction: column; gap: 0; padding: 20px 0; }
+    .confirm-details > div:nth-child(2) { margin-top: 20px; }
+    .confirm-details > div:nth-child(3) { margin-top: 60px; }
+    .confirm-desc { font-size: 16px; font-weight: 400; color: var(--navy); line-height: 1.4; }
+    .confirm-section-title { font-size: 16px; font-weight: 700; color: var(--navy); line-height: 1.3; }
+    .confirm-section-text { font-size: 16px; font-weight: 400; color: var(--navy); line-height: 1.4; margin-top: 4px; }
+
+    /* Nutrition area: table left, summary text right */
+    .nutrition-area { display: flex; gap: 16px; align-items: flex-start; margin-top: 4px; }
+    .nutrition-area-left { flex-shrink: 0; }
+    .confirm-nutrition-header {
+      font-size: 14px; font-weight: 700; color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .nutrition-table {
+      display: flex; border: 1px solid rgba(13,79,146,0.2); overflow: hidden;
+    }
+    .nutrition-col {
+      display: flex; flex-direction: column; align-items: center;
+      border-right: 1px solid rgba(13,79,146,0.2);
+      min-width: 56px;
+    }
+    .nutrition-col:first-child { min-width: 62px; }
+    .nutrition-col:last-child { border-right: none; }
+    .nutrition-col-label {
+      font-size: 9px; font-weight: 700; color: var(--navy);
+      padding: 5px 6px 3px; text-align: center; line-height: 1.2;
+      border-bottom: 1px solid rgba(13,79,146,0.15); width: 100%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nutrition-col-value {
+      font-size: 11px; font-weight: 700; color: var(--navy); line-height: 1;
+      padding: 5px 4px 3px; text-align: center;
+    }
+    .nutrition-col-badge {
+      font-size: 7px; font-weight: 800; color: var(--white);
+      padding: 2px 7px; border-radius: 10px; text-transform: uppercase;
+      letter-spacing: 0.3px; margin-bottom: 3px;
+    }
+    .nutrition-col-badge.low { background: #5CB85C; }
+    .nutrition-col-badge.med { background: #F0AD4E; }
+    .nutrition-col-badge.high { background: #D9534F; }
+    .nutrition-col-pct {
+      font-size: 10px; font-weight: 700; color: #2D8C2D;
+      padding: 4px 6px; width: 100%; text-align: center;
+      background: #E8F5E8; border-top: 1px solid rgba(13,79,146,0.15);
+      margin-top: auto;
+    }
+    .nutrition-ri-text {
+      font-size: 11px; font-weight: 400; color: var(--navy); opacity: 0.5;
+      margin-top: 4px;
+    }
+
+    .confirm-right {
+      flex: 1; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; padding: 20px 20px 20px 0;
+      background: var(--grey);
+    }
+    .confirm-right-inner {
+      width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .confirm-product-img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+
+    /* Pour button — large circle rising from bottom */
+    .pour-btn {
+      position: absolute; bottom: -495px; left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 600px; border-radius: 50%;
+      background: var(--navy); border: none;
+      cursor: pointer; display: flex; align-items: flex-start; justify-content: center;
+      padding-top: 52px;
+      box-shadow: 0px -4px 12px rgba(8,88,145,0.15);
+      overflow: hidden;
+      transition: transform 0.2s ease;
+      z-index: 30;
+    }
+    .pour-btn::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+      box-shadow: inset 0px 4px 2px 0px rgba(255,255,255,0.15);
+    }
+    .pour-btn:active { transform: translateX(-50%) scale(0.98); }
+    .pour-btn-text {
+      font-size: 20px; font-weight: 600; color: var(--white);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      transition: opacity 0.15s ease;
+    }
+
+    /* ─── Pour ripple overlay ─── */
+    #pour-ripple {
+      position: absolute; inset: 0;
+      background: var(--navy);
+      z-index: 200;
+      pointer-events: none;
+      clip-path: circle(0px at 50% 795px);
+      opacity: 1;
+      will-change: clip-path, opacity;
+    }
+
+    /* ─── Pouring Screen ─── */
+    #screen-pouring { background: #C5DBFC !important; padding: 0; }
+    #screen-pouring.exit-left, #screen-pouring.exit-right { transition: none; }
+
+    #pour-canvas {
+      position: absolute; inset: 0;
+      width: 1024px; height: 600px;
+      pointer-events: none;
+    }
+
+    #pour-text {
+      position: absolute;
+      top: calc(50% - 52px); left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 28px; font-weight: 600; line-height: 1.3;
+      color: var(--white); text-align: center; white-space: nowrap;
+      pointer-events: none; z-index: 10;
+      opacity: 0; transition: opacity 0.6s ease, color 0.4s ease;
+    }
+    #pour-text.visible { opacity: 1; }
+    #pour-text.dark    { color: var(--navy); }
+
+    /* ── Ready text ── */
+    #pour-ready-text {
+      position: absolute;
+      top: calc(50% - 94px); left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 44px; font-weight: 700; line-height: 1.2;
+      color: var(--navy); text-align: center; white-space: nowrap;
+      pointer-events: none; z-index: 10;
+      opacity: 0; transition: opacity 0.8s ease;
+    }
+    #pour-ready-text.visible { opacity: 1; }
+
+    /* ── Bottom stats ── */
+    #pour-stats {
+      position: absolute; bottom: 80px; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: center;
+      gap: 80px; pointer-events: none; z-index: 10;
+    }
+    .pour-stat-block {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      text-align: center; color: var(--navy);
+      transition: color 0.5s ease;
+      width: 340px;
+    }
+    .pour-stat-block.light { color: var(--white); }
+    .pour-stat-label  { font-size: 20px; font-weight: 700; line-height: 1.2; }
+    .pour-stat-number { font-size: 44px; font-weight: 700; line-height: 1.2; }
+    .pour-stat-unit   { font-size: 20px; font-weight: 700; line-height: 1.2; }
+
+    /* ── Circle mark ── */
+    .pour-circlemark {
+      width: 80px; height: 80px; flex-shrink: 0;
+      transition: filter 0.5s ease;
+    }
+    .pour-circlemark img { width: 100%; height: 100%; object-fit: contain; }
+    .pour-circlemark.light img { filter: brightness(0) invert(1); }
+
+    /* ─── Screensaver screen ─── */
+    #screen-screensaver { background: #000; padding: 0; gap: 0; }
+    .screensaver-home-link {
+      position: absolute; top: 0; left: 0; width: 60px; height: 60px;
+      z-index: 10; cursor: default;
+      background: transparent; border: none; outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #screensaver-video {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; z-index: 0;
+    }
+    .get-started-btn {
+      position: absolute;
+      bottom: 54px; left: 50%; transform: translateX(-50%);
+      width: 380px; height: 64px;
+      background: #fff; border: none; border-radius: 32px;
+      color: #1A3A6B; font-family: inherit;
+      font-size: 15px; font-weight: 700; letter-spacing: 2.5px;
+      cursor: pointer; z-index: 2;
+    }
+
+    /* Prevent coloured-background screens from flashing during exit */
+    #screen-screensaver.exit-left, #screen-screensaver.exit-right,
+    #screen-done.exit-left, #screen-done.exit-right { transition: none; }
+
+    /* ─── Done screen ─── */
+    #screen-done { background: var(--navy) !important; gap: 28px; cursor: pointer; }
+    .done-check {
+      width: 90px; height: 90px; border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      display: flex; align-items: center; justify-content: center;
+      animation: checkPop 0.5s ease-out;
+    }
+    @keyframes checkPop { 0% { transform: scale(0); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+    .done-check svg { width: 42px; height: 42px; color: var(--white); }
+    .done-title { font-size: 28px; font-weight: 600; color: var(--white); text-align: center; }
+    .done-subtitle { font-size: 16px; color: rgba(255,255,255,0.55); text-align: center; font-weight: 500; }
+    .done-tap-hint {
+      color: rgba(255,255,255,0.35); font-size: 13px; font-weight: 600;
+      letter-spacing: 1px; text-transform: uppercase;
+      animation: pulse 2s ease-in-out infinite; margin-top: 16px;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.8; } }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="pour-ripple"></div>
+    <video id="pour-backdrop" src="../../images/AL-backdrop.mp4" loop muted playsinline preload="auto" style="display:none"></video>
+
+    <!-- ══════ 0. SCREENSAVER ══════ -->
+    <div id="screen-screensaver" class="screen active">
+      <a href="../../index.html" class="screensaver-home-link"></a>
+      <video id="screensaver-video" autoplay loop muted playsinline src="../../images/aqualibra screensaver.mp4"></video>
+      <button class="get-started-btn" onclick="goTo('screen-flavour')">GET STARTED</button>
+    </div>
+
+    <!-- ══════ 1. FLAVOUR ══════ -->
+    <div id="screen-flavour" class="screen">
+      <button class="confirm-back-btn" style="position:absolute; top:40px; left:40px;" onclick="goTo('screen-screensaver')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div class="screen-title">Select your drink</div>
+      <div class="options-row" id="flavour-options"></div>
+    </div>
+
+    <!-- ══════ 2. CONFIRM / INGREDIENTS ══════ -->
+    <div id="screen-confirm" class="screen">
+      <div class="confirm-left">
+        <div class="confirm-header">
+          <button class="confirm-back-btn" onclick="goTo('screen-flavour')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <div class="confirm-title-block">
+            <div class="confirm-flavour-label" id="confirm-flavour"></div>
+            <div class="confirm-type-label" id="confirm-type"></div>
+          </div>
+        </div>
+        <div class="confirm-divider"></div>
+        <div class="confirm-details">
+          <div class="confirm-desc" id="confirm-desc"></div>
+          <div>
+            <div class="confirm-section-title">Ingredients</div>
+            <div class="confirm-section-text" id="confirm-ingredients"></div>
+          </div>
+          <div>
+            <div class="confirm-section-title">Nutrition Per 100ml</div>
+            <div class="nutrition-area">
+              <div class="nutrition-area-left">
+                <div class="nutrition-table" id="confirm-nutrition"></div>
+                <div class="nutrition-ri-text">% of an adult's reference intake</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="confirm-right">
+        <div class="confirm-right-inner" id="confirm-graphic"></div>
+      </div>
+      <div class="pour-btn" onclick="startPour()">
+        <div class="pour-btn-text">Confirm &amp; Pour</div>
+      </div>
+    </div>
+
+    <!-- ══════ 3. POURING ══════ -->
+    <div id="screen-pouring" class="screen">
+      <canvas id="pour-canvas"></canvas>
+      <div id="pour-text">Your drink is being poured</div>
+      <div id="pour-ready-text">Your drink is ready.<br>Enjoy!</div>
+      <div id="pour-stats">
+        <div class="pour-stat-block" id="pour-stat-left">
+          <div class="pour-stat-label">This tap has saved</div>
+          <div class="pour-stat-number">2,482</div>
+          <div class="pour-stat-unit">single use bottles</div>
+        </div>
+        <div class="pour-circlemark" id="pour-circlemark">
+          <img src="../../images/aqualibra-circlemark.svg" alt="Aqua Libra">
+        </div>
+        <div class="pour-stat-block" id="pour-stat-right">
+          <div class="pour-stat-label">Together we have saved</div>
+          <div class="pour-stat-number">86,238</div>
+          <div class="pour-stat-unit">single use bottles</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ 4. DONE ══════ -->
+    <div id="screen-done" class="screen" onclick="goTo('screen-screensaver')">
+      <div class="done-check">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 24l10 10 18-18"/>
+        </svg>
+      </div>
+      <div class="done-title">Enjoy your drink!</div>
+      <div class="done-subtitle" id="done-summary"></div>
+      <div class="done-tap-hint">Tap to start again</div>
+    </div>
+  </div>
+
+  <script>
+    // ─── State ───
+    let currentType    = 'still';
+    let currentSize    = '500';
+    let currentFlavour = '';
+    let currentFlavourData = null;
+    let currentScreen  = 'screen-screensaver';
+    let transitioning  = false;
+    let pourTimer      = null;
+
+    // ─── Nutrition data ───
+    const nutritionFlavoured = [
+      { label: 'Energy',     value: '2kJ<br>0.5kCal', level: 'low', pct: '<1%' },
+      { label: 'Fat',        value: '0g',              level: 'low', pct: '0%'  },
+      { label: 'Saturates',  value: '0g',              level: 'low', pct: '0%'  },
+      { label: 'Sugars',     value: '0g',              level: 'low', pct: '0%'  },
+      { label: 'Salt',       value: '0g',              level: 'low', pct: '0%'  },
+    ];
+    const nutritionWater = [
+      { label: 'Energy',     value: '0kJ<br>0kCal',   level: 'low', pct: '0%'  },
+      { label: 'Fat',        value: '0g',              level: 'low', pct: '0%'  },
+      { label: 'Saturates',  value: '0g',              level: 'low', pct: '0%'  },
+      { label: 'Sugars',     value: '0g',              level: 'low', pct: '0%'  },
+      { label: 'Salt',       value: '0g',              level: 'low', pct: '0%'  },
+    ];
+
+    // ─── Master Flavour Catalogue ───
+    const flavourCatalogue = {
+      'strawberry-watermelon':  { name: 'Strawberry & Watermelon',  btnClass: 'pink-btn',   color: '#FAAFC0', img: '../../images/button strawberry watermelon.png',  graphic: '../../images/graphic strawberry watermelon.png'  },
+      'orange-mango':           { name: 'Orange & Mango',           btnClass: 'orange-btn', color: '#F5C8A0', img: '../../images/button orange mango.png',            graphic: '../../images/graphic orange mango.png'           },
+      'raspberry-blackcurrant': { name: 'Raspberry & Blackcurrant', btnClass: 'purple-btn', color: '#D4C5E8', img: '../../images/button raspberry blackcurrant.png',  graphic: '../../images/graphic raspberry blackcurrant.png' },
+      'cucumber-mint-lime':     { name: 'Cucumber, Mint & Lime',    btnClass: 'green-btn',  color: '#D1F684', img: '../../images/button cucumber mintlime.png',       graphic: '../../images/graphic cucumber mintlime.png'      },
+      'blackcurrant':           { name: 'Blackcurrant',             btnClass: 'purple-btn', color: '#C8A8D0', img: '../../images/button blackcurrant.png',            graphic: '../../images/graphic blackcurrant.png'           },
+      'lime-lemon':             { name: 'Lemon & Lime',             btnClass: 'green-btn',  color: '#D8F084', img: '../../images/button lime lemon.png',              graphic: '../../images/graphic lime lemon.png'            },
+      'lime-mint':              { name: 'Lime & Mint',              btnClass: 'green-btn',  color: '#C8F0D0', img: '../../images/button lime.png',                    graphic: '../../images/graphic lime mint.png'             },
+      'mango':                  { name: 'Mango',                    btnClass: 'orange-btn', color: '#F8D09C', img: '../../images/button mango.png',                   graphic: '../../images/graphic mango.png'                 },
+      'mango-passionfruit':     { name: 'Mango & Passionfruit',     btnClass: 'orange-btn', color: '#F8D4A0', img: '../../images/button mango passionfruit.png',      graphic: '../../images/graphic mango passionfruit.png'    },
+      'mango-raspberry':        { name: 'Mango & Raspberry',        btnClass: 'pink-btn',   color: '#F5BCA8', img: '../../images/button mango raspberry.png',         graphic: '../../images/graphic mango raspberry.png'       },
+      'orange':                 { name: 'Orange',                   btnClass: 'orange-btn', color: '#F8C890', img: '../../images/button orange.png',                  graphic: '../../images/graphic orange.png'                },
+      'orange-passionfruit':    { name: 'Orange & Passionfruit',    btnClass: 'orange-btn', color: '#F8D090', img: '../../images/button orange passionfruit.png',     graphic: '../../images/graphic orange passionfruit.png'   },
+      'orange-peach':           { name: 'Orange & Peach',           btnClass: 'orange-btn', color: '#F8C8A0', img: '../../images/button orange peach.png',            graphic: '../../images/graphic orange peach.png'          },
+      'orange-raspberry':       { name: 'Orange & Raspberry',       btnClass: 'pink-btn',   color: '#F5B0B0', img: '../../images/button orange raspberry.png',        graphic: '../../images/graphic orange raspberry.png'      },
+      'passionfruit':           { name: 'Passionfruit',             btnClass: 'orange-btn', color: '#F8D890', img: '../../images/button passion fruit.png',           graphic: '../../images/graphic passion fruit.png'         },
+      'peach':                  { name: 'Peach',                    btnClass: 'orange-btn', color: '#F8D4B8', img: '../../images/button peach.png',                   graphic: '../../images/graphic peach.png'                 },
+      'peach-mango':            { name: 'Peach & Mango',            btnClass: 'orange-btn', color: '#F8CCA0', img: '../../images/button peach mango.png',             graphic: '../../images/graphic peach mango.png'           },
+      'peach-passionfruit':     { name: 'Peach & Passionfruit',     btnClass: 'orange-btn', color: '#F8D0A8', img: '../../images/button peach passionfruit.png',      graphic: '../../images/graphic peach passionfruit.png'    },
+      'peach-raspberry':        { name: 'Peach & Raspberry',        btnClass: 'pink-btn',   color: '#F8B8B0', img: '../../images/button peach raspberry.png',         graphic: '../../images/graphic peach raspberry.png'       },
+      'raspberry':              { name: 'Raspberry',                btnClass: 'pink-btn',   color: '#F5AABB', img: '../../images/button raspberry.png',               graphic: '../../images/graphic raspberry.png'             },
+      'raspberry-passionfruit': { name: 'Raspberry & Passionfruit', btnClass: 'pink-btn',   color: '#F5B4C0', img: '../../images/button raspberry passionfruit.png', graphic: '../../images/graphic raspberry passionfruit.png' },
+      'strawberry':             { name: 'Strawberry',               btnClass: 'pink-btn',   color: '#FAAFC0', img: '../../images/button strawberry.png',              graphic: '../../images/graphic strawberry.png'            },
+      'summerfruits':           { name: 'Summer Fruits',            btnClass: 'pink-btn',   color: '#F5B0C8', img: '../../images/button summerfruits.png',            graphic: '../../images/graphic summerfruits.png'          },
+      'watermelon':             { name: 'Watermelon',               btnClass: 'pink-btn',   color: '#F5B0B8', img: '../../images/button watermelon.png',              graphic: '../../images/graphic watermelon.png'            },
+      'apple-cinnamon':         { name: 'Apple & Cinnamon',         btnClass: 'orange-btn', color: '#F8D0B8', img: '../../images/button apple cinnamon.png',          graphic: '../../images/graphic apple cinnamon.png'        },
+      'lemon-ginger':           { name: 'Lemon & Ginger',           btnClass: 'orange-btn', color: '#F5E090', img: '../../images/button lemon ginger.png',            graphic: '../../images/graphic lemon ginger.png'          },
+      'winter-berry':           { name: 'Winter Berry',             btnClass: 'purple-btn', color: '#D4B0C8', img: '../../images/button winter berry.png',            graphic: '../../images/graphic winter berry.png'          },
+      'pear-ginger':            { name: 'Pear & Ginger',            btnClass: 'green-btn',  color: '#D8E8A8', img: '../../images/button pear ginger.png',             graphic: '../../images/graphic pear ginger.png'           },
+      'cranberry-redcurrant':   { name: 'Cranberry & Redcurrant',   btnClass: 'pink-btn',   color: '#F0A0B0', img: '../../images/button cranberry redcurrant.png',   graphic: '../../images/graphic cranberry redcurrant.png'  },
+      'bloodorange-yuzu':       { name: 'Blood Orange & Yuzu',      btnClass: 'orange-btn', color: '#F8C080', img: '../../images/button blood orange yuzu.png',       graphic: '../../images/graphic blood orange yuzu.png'     },
+    };
+
+    // ── Water option (still) ──
+    const waterEntry = {
+      name: 'Just Water', btnClass: 'blue-btn', img: '../../images/button water.png',
+      graphic: '../../images/graphic water.png', color: '#C5DBFC',
+      desc: 'Pure Filtered Still Water', ingredients: 'Filtered Water',
+      nutrition: nutritionWater, isWater: true,
+    };
+
+    // ── Active flavours – swap these keys to change what's on the UI ──
+    const activeFlavourKeys = [
+      'strawberry-watermelon',
+      'orange-mango',
+      'raspberry-blackcurrant',
+      'lime-lemon',
+    ];
+
+    // Build still flavours array from the active keys + water
+    const stillFlavours = activeFlavourKeys
+      .map(key => {
+        const f = flavourCatalogue[key];
+        if (!f) return null;
+        return {
+          name: f.name, btnClass: f.btnClass, color: f.color, img: f.img, graphic: f.graphic,
+          desc: `Still ${f.name} Flavour Soft Drink with Sweetener`,
+          ingredients: 'Water, Natural Flavourings, Acid (Citric acid), Sweetener (Sucralose)',
+          nutrition: nutritionFlavoured,
+        };
+      })
+      .filter(Boolean)
+      .concat(waterEntry);
+
+    // Build flavour options on screen load
+    (function buildFlavourScreen() {
+      const row = document.getElementById('flavour-options');
+      stillFlavours.forEach(f => {
+        const col = document.createElement('div');
+        col.className = 'option-col';
+        col.onclick = () => selectFlavour(f);
+
+        const btn = document.createElement('div');
+        btn.className = 'circle-btn ' + f.btnClass;
+        const img = document.createElement('img');
+        img.src = f.img;
+        img.alt = f.name;
+        img.className = 'photo';
+        btn.appendChild(img);
+
+        const label = document.createElement('div');
+        label.className = 'option-label';
+        label.textContent = f.name.toUpperCase();
+
+        col.appendChild(btn);
+        col.appendChild(label);
+        row.appendChild(col);
+      });
+    })();
+
+    // ─── Navigation ───
+    const screenOrder = ['screen-screensaver', 'screen-flavour', 'screen-confirm', 'screen-pouring', 'screen-done'];
+
+    function goTo(screenId) {
+      if (transitioning) return;
+      transitioning = true;
+
+      const prev = document.getElementById(currentScreen);
+      const next = document.getElementById(screenId);
+
+      const prevIdx = screenOrder.indexOf(currentScreen);
+      const nextIdx = screenOrder.indexOf(screenId);
+      const forward = nextIdx > prevIdx;
+
+      prev.classList.remove('active');
+      prev.classList.add(forward ? 'exit-left' : 'exit-right');
+
+      next.style.transition = 'none';
+      next.classList.add(forward ? 'from-right' : 'from-left');
+      next.offsetHeight;
+
+      next.style.transition = '';
+      next.classList.remove('from-right', 'from-left');
+      next.classList.add('active');
+
+      setTimeout(() => { prev.classList.remove('exit-left', 'exit-right'); }, 450);
+
+      currentScreen = screenId;
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      setTimeout(() => { transitioning = false; }, 500);
+    }
+
+    // ─── Select Flavour → Confirm ───
+    function selectFlavour(flavour) {
+      currentFlavour = flavour.name;
+      currentFlavourData = flavour;
+
+      if (flavour.isWater) {
+        document.getElementById('confirm-flavour').textContent = '';
+        document.getElementById('confirm-type').textContent = 'FILTERED WATER';
+      } else {
+        document.getElementById('confirm-flavour').textContent = flavour.name.toUpperCase();
+        document.getElementById('confirm-type').textContent = 'FILTERED WATER';
+      }
+      document.getElementById('confirm-desc').textContent = flavour.desc;
+      document.getElementById('confirm-ingredients').textContent = flavour.ingredients;
+
+      const nutritionEl = document.getElementById('confirm-nutrition');
+      nutritionEl.innerHTML = flavour.nutrition.map(col => {
+        const isEnergy = col.label === 'Energy';
+        return '<div class="nutrition-col">' +
+          '<div class="nutrition-col-label">' + col.label + '</div>' +
+          '<div class="nutrition-col-value">' + col.value + '</div>' +
+          (isEnergy ? '' : '<div class="nutrition-col-badge ' + col.level + '">' + col.level + '</div>') +
+          '<div class="nutrition-col-pct">' + col.pct + '</div>' +
+        '</div>';
+      }).join('');
+
+      const graphic = document.getElementById('confirm-graphic');
+      graphic.style.background = flavour.color;
+      graphic.innerHTML = '<img src="' + flavour.graphic + '" alt="' + flavour.name + '" class="confirm-product-img">';
+
+      goTo('screen-confirm');
+    }
+
+    // ─── Confirm → ripple expand → Pouring wave animation ───
+    function startPour() {
+      if (transitioning) return;
+      transitioning = true;
+
+      const btn     = document.querySelector('.pour-btn');
+      const ripple  = document.getElementById('pour-ripple');
+      const confirm = document.getElementById('screen-confirm');
+      const pouring = document.getElementById('screen-pouring');
+
+      btn.querySelector('.pour-btn-text').style.opacity = '0';
+      btn.style.pointerEvents = 'none';
+
+      // 1. Expand navy ripple from button centre
+      ripple.style.transition = 'none';
+      ripple.style.clipPath   = 'circle(0px at 50% 795px)';
+      ripple.style.opacity    = '1';
+      ripple.offsetHeight;
+
+      ripple.style.transition = 'clip-path 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
+      requestAnimationFrame(() => {
+        ripple.style.clipPath = 'circle(1200px at 50% 795px)';
+      });
+
+      // 2. Once ripple covers the screen, swap to pouring screen
+      setTimeout(() => {
+        [confirm, pouring].forEach(el => el.style.transition = 'none');
+        confirm.classList.remove('active');
+        pouring.classList.add('active');
+        pouring.offsetHeight;
+        [confirm, pouring].forEach(el => el.style.transition = '');
+        currentScreen = 'screen-pouring';
+
+        // 3. Fade out ripple to reveal the canvas (which starts fully navy)
+        ripple.style.transition = 'opacity 0.3s ease';
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          ripple.style.opacity = '0';
+        }));
+
+        setTimeout(() => {
+          ripple.style.transition = 'none';
+          ripple.style.clipPath   = 'circle(0px at 50% 795px)';
+          ripple.style.opacity    = '1';
+          btn.querySelector('.pour-btn-text').style.opacity = '';
+          btn.style.pointerEvents = '';
+          transitioning = false;
+        }, 400);
+
+        // 4. Start wave animation
+        beginPourAnimation();
+
+        // Navigation back to screensaver is triggered from within
+        // beginPourAnimation() once the ready text appears.
+      }, 620);
+    }
+
+    // ─── Wave pour animation ───
+    let pourAnimActive = false;
+    let pourAnimStart  = 0;
+    const POUR_DURATION = 5000;
+
+    const waveLayers = [
+      { speed: 0.9,  amp: 0.022, phaseX: 3.0, phaseOff: 0.0 },  // front
+      { speed: 0.55, amp: 0.019, phaseX: 2.4, phaseOff: 2.8 },  // back
+    ];
+
+    function waveY(x, layer, sec) {
+      const freq = (Math.PI * 2) / 1024;
+      return (
+        Math.sin(x * freq * layer.phaseX + sec * layer.speed + layer.phaseOff) * (600 * layer.amp) +
+        Math.sin(x * freq * (layer.phaseX + 1.8) - sec * layer.speed * 1.4 + 1.0) * (600 * layer.amp * 0.38)
+      );
+    }
+
+    function easeInOut(t) {
+      return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+
+    function beginPourAnimation() {
+      const canvas      = document.getElementById('pour-canvas');
+      const ctx         = canvas.getContext('2d');
+      const pourText    = document.getElementById('pour-text');
+      const readyText   = document.getElementById('pour-ready-text');
+      const statLeft    = document.getElementById('pour-stat-left');
+      const statRight   = document.getElementById('pour-stat-right');
+      const circlemark  = document.getElementById('pour-circlemark');
+      const video       = document.getElementById('pour-backdrop');
+      canvas.width = 1024; canvas.height = 600;
+      video.play().catch(() => {});
+
+      // Reset all elements
+      pourText.classList.remove('visible', 'dark');
+      readyText.classList.remove('visible');
+      statLeft.classList.remove('light');
+      statRight.classList.remove('light');
+      circlemark.classList.remove('light');
+
+      pourAnimActive = true;
+      pourAnimStart  = null;   // wave doesn't move until this is set
+      let fillLevel  = 1.0;
+      let poured     = false;
+
+      // Stats + mark start light (wave covers them from the top immediately)
+      statLeft.classList.add('light');
+      statRight.classList.add('light');
+      circlemark.classList.add('light');
+
+      // Text fades in at 300ms, then hold 2s before wave starts draining
+      setTimeout(() => { pourText.classList.add('visible'); }, 300);
+      setTimeout(() => { pourAnimStart = performance.now(); }, 2300);
+
+      function syncColors() {
+        const waveTopY = (1 - fillLevel) * 600;
+        // Pour text: navy once wave has passed below it (~248px)
+        pourText.classList.toggle('dark', waveTopY > 248);
+        // Stats center is at ~464px (bottom:80px + ~56px half-height)
+        const statsSubmerged = waveTopY < 464;
+        statLeft.classList.toggle('light',    statsSubmerged);
+        statRight.classList.toggle('light',   statsSubmerged);
+        circlemark.classList.toggle('light',  statsSubmerged);
+      }
+
+      function loop() {
+        if (!pourAnimActive) return;
+        requestAnimationFrame(loop);
+
+        const now      = performance.now();
+        const sec      = now * 0.001;
+        const progress = pourAnimStart ? Math.min(1, (now - pourAnimStart) / POUR_DURATION) : 0;
+
+        fillLevel = 1.0 - easeInOut(progress) * 1.08;
+        syncColors();
+
+        // Draw background
+        ctx.fillStyle = '#C5DBFC';
+        ctx.fillRect(0, 0, 1024, 600);
+
+        // Draw liquid while still on screen
+        if ((1 - fillLevel) * 600 <= 600 + 600 * 0.07) {
+          const baseY = (1 - fillLevel) * 600;
+
+          // Back wave — semi-transparent navy
+          const back = waveLayers[1];
+          ctx.beginPath();
+          ctx.moveTo(0, baseY - 600 * 0.025 + waveY(0, back, sec));
+          for (let x = 3; x <= 1024; x += 3) {
+            ctx.lineTo(x, baseY - 600 * 0.025 + waveY(x, back, sec));
+          }
+          ctx.lineTo(1024, 600); ctx.lineTo(0, 600);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(13,79,146,0.45)';
+          ctx.fill();
+
+          // Front wave — navy + optional video texture
+          const front = waveLayers[0];
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(0, baseY + waveY(0, front, sec));
+          for (let x = 3; x <= 1024; x += 3) {
+            ctx.lineTo(x, baseY + waveY(x, front, sec));
+          }
+          ctx.lineTo(1024, 600); ctx.lineTo(0, 600);
+          ctx.closePath();
+          ctx.clip();
+          if (video.readyState >= 2) {
+            ctx.drawImage(video, 0, 0, 1024, 600);
+            ctx.fillStyle = 'rgba(13,79,146,0.62)';
+          } else {
+            ctx.fillStyle = '#0D4F92';
+          }
+          ctx.fillRect(0, 0, 1024, 600);
+          ctx.restore();
+        }
+
+        if (progress >= 1 && !poured) {
+          poured = true;
+          pourAnimActive = false;
+          pourText.classList.remove('visible');
+          statLeft.classList.remove('light');
+          statRight.classList.remove('light');
+          circlemark.classList.remove('light');
+          ctx.fillStyle = '#C5DBFC';
+          ctx.fillRect(0, 0, 1024, 600);
+          // Show ready text, then hold for 5 seconds before returning to screensaver
+          setTimeout(() => {
+            readyText.classList.add('visible');
+            pourTimer = setTimeout(() => { goTo('screen-screensaver'); }, 5000);
+          }, 400);
+        }
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    // Stop animation when navigating away from pouring screen
+    const _goTo = goTo;
+    goTo = function(id) {
+      if (currentScreen === 'screen-pouring') {
+        pourAnimActive = false;
+        if (pourTimer) { clearTimeout(pourTimer); pourTimer = null; }
+        document.getElementById('pour-text').classList.remove('visible', 'dark');
+        document.getElementById('pour-ready-text').classList.remove('visible');
+        document.getElementById('pour-stat-left').classList.remove('light');
+        document.getElementById('pour-stat-right').classList.remove('light');
+        document.getElementById('pour-circlemark').classList.remove('light');
+      }
+      return _goTo(id);
+    };
+  </script>
+</body>
+</html>
