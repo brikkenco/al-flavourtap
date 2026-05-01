@@ -332,6 +332,16 @@
       animation: pulse 2s ease-in-out infinite; z-index: 1;
     }
     @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.9; } }
+
+    /* ─── Idle demo overlay ─── */
+    #demo-overlay {
+      position: absolute; inset: 0; z-index: 400;
+      background: #000;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+    #demo-overlay.active { opacity: 1; pointer-events: auto; cursor: pointer; }
+    #demo-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   </style>
 </head>
 <body>
@@ -339,10 +349,15 @@
     <!-- Ripple overlay for confirm → hot pour transition -->
     <div id="pour-ripple"></div>
 
+    <!-- ══════ IDLE DEMO OVERLAY ══════ -->
+    <div id="demo-overlay">
+      <video id="demo-video" src="../../images/hotonly-demo.mp4" muted playsinline loop></video>
+    </div>
+
     <!-- ══════ 0. SCREENSAVER ══════ -->
     <div id="screen-screensaver" class="screen active">
       <a href="../../index.html" class="screensaver-home-link"></a>
-      <video id="screensaver-video" autoplay loop muted playsinline src="../../images/aqualibra screensaver.mp4"></video>
+      <video id="screensaver-video" autoplay loop muted playsinline src="../../images/hot-screensaver.mp4"></video>
       <button class="get-started-btn" onclick="goTo('screen-flavour')">GET STARTED</button>
     </div>
 
@@ -686,6 +701,59 @@
       document.getElementById('hot-pour-video').pause();
       goTo('screen-flavour');
     }
+
+    // ─── Idle demo playback ───
+    const IDLE_TIMEOUT = 30000;
+    let idleTimer = null;
+
+    function showDemo() {
+      const overlay = document.getElementById('demo-overlay');
+      const video   = document.getElementById('demo-video');
+      video.currentTime = 0;
+      video.play().catch(() => {});
+      overlay.classList.add('active');
+    }
+
+    function hideDemo() {
+      const overlay = document.getElementById('demo-overlay');
+      const video   = document.getElementById('demo-video');
+      overlay.classList.remove('active');
+      video.pause();
+      video.currentTime = 0;
+
+      // Cancel any in-progress hot pour timer and pause the pour video
+      if (hotPourTimer) { clearTimeout(hotPourTimer); hotPourTimer = null; }
+      document.getElementById('hot-pour-video').pause();
+
+      // Force-reset all screens back to screensaver
+      transitioning = false;
+      document.querySelectorAll('.screen').forEach(s => {
+        s.classList.remove('active', 'exit-left', 'exit-right', 'from-right', 'from-left');
+        s.style.transition = '';
+      });
+      document.getElementById('screen-screensaver').classList.add('active');
+      currentScreen = 'screen-screensaver';
+
+      resetIdleTimer();
+    }
+
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(showDemo, IDLE_TIMEOUT);
+    }
+
+    // Dismiss demo on any interaction with the overlay
+    const demoOverlay = document.getElementById('demo-overlay');
+    demoOverlay.addEventListener('click',      hideDemo);
+    demoOverlay.addEventListener('touchstart', hideDemo, { passive: true });
+
+    // Reset idle timer on any user activity
+    ['mousemove', 'mousedown', 'touchstart', 'keydown'].forEach(evt => {
+      document.addEventListener(evt, resetIdleTimer, { passive: true });
+    });
+
+    // Kick off the idle timer
+    resetIdleTimer();
   </script>
 </body>
 </html>

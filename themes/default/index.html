@@ -380,22 +380,60 @@
     #screen-enhance.entered .enhance-no-thanks { animation: enhanceContentIn 0.4s ease 0.25s both; }
 
     /* ─── Pouring Screen ─── */
-    #screen-pouring { background: var(--navy) !important; }
-    .pouring-info { text-align: center; color: var(--white); }
-    .pouring-title { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
-    .pouring-detail { font-size: 16px; opacity: 0.7; font-weight: 500; }
+    #screen-pouring { background: #C5DBFC !important; padding: 0; }
+    #screen-pouring.exit-left, #screen-pouring.exit-right { transition: none; }
 
-    .pour-bar-track {
-      position: absolute; bottom: 0; left: 0; right: 0; height: 6px;
-      background: rgba(255,255,255,0.1);
+    #pour-canvas {
+      position: absolute; inset: 0;
+      width: 1024px; height: 600px;
+      pointer-events: none;
     }
-    .pour-bar-fill {
-      height: 100%; width: 0; background: var(--still);
-      animation: pourBarAnim 5s ease-out 0.3s forwards;
+
+    #pour-text {
+      position: absolute;
+      top: calc(50% - 52px); left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 28px; font-weight: 600; line-height: 1.3;
+      color: var(--white); text-align: center; white-space: nowrap;
+      pointer-events: none; z-index: 10;
+      opacity: 0; transition: opacity 0.6s ease, color 0.4s ease;
     }
-    .pour-bar-fill.aqua-bar  { background: var(--aqua); }
-    .pour-bar-fill.blush-bar { background: var(--blush); }
-    @keyframes pourBarAnim { to { width: 100%; } }
+    #pour-text.visible { opacity: 1; }
+    #pour-text.dark    { color: var(--navy); }
+
+    #pour-ready-text {
+      position: absolute;
+      top: calc(50% - 94px); left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 44px; font-weight: 700; line-height: 1.2;
+      color: var(--navy); text-align: center; white-space: nowrap;
+      pointer-events: none; z-index: 10;
+      opacity: 0; transition: opacity 0.8s ease;
+    }
+    #pour-ready-text.visible { opacity: 1; }
+
+    #pour-stats {
+      position: absolute; bottom: 80px; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: center;
+      gap: 80px; pointer-events: none; z-index: 10;
+    }
+    .pour-stat-block {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      text-align: center; color: var(--navy);
+      transition: color 0.5s ease;
+      width: 340px;
+    }
+    .pour-stat-block.light { color: var(--white); }
+    .pour-stat-label  { font-size: 20px; font-weight: 700; line-height: 1.2; }
+    .pour-stat-number { font-size: 44px; font-weight: 700; line-height: 1.2; }
+    .pour-stat-unit   { font-size: 20px; font-weight: 700; line-height: 1.2; }
+
+    .pour-circlemark {
+      width: 80px; height: 80px; flex-shrink: 0;
+      transition: filter 0.5s ease;
+    }
+    .pour-circlemark img { width: 100%; height: 100%; object-fit: contain; }
+    .pour-circlemark.light img { filter: brightness(0) invert(1); }
 
     /* ─── Screensaver screen ─── */
     #screen-screensaver { background: #000; padding: 0; gap: 0; }
@@ -509,6 +547,7 @@
     <!-- Persistent video backdrop — masked by clip-path, shared across all screens -->
     <video id="app-video" autoplay loop muted playsinline src="images/AL-backdrop.mp4"></video>
     <div id="pour-ripple"></div>
+    <video id="pour-backdrop" src="images/AL-backdrop.mp4" loop muted playsinline preload="auto" style="display:none"></video>
 
     <!-- ══════ 0. SCREENSAVER ══════ -->
     <div id="screen-screensaver" class="screen active">
@@ -659,12 +698,23 @@
 
     <!-- ══════ 7. POURING ══════ -->
     <div id="screen-pouring" class="screen">
-      <div class="pouring-info">
-        <div class="pouring-title" id="pouring-title">Pouring your drink...</div>
-        <div class="pouring-detail" id="pouring-detail"></div>
-      </div>
-      <div class="pour-bar-track">
-        <div class="pour-bar-fill" id="pour-bar-fill"></div>
+      <canvas id="pour-canvas"></canvas>
+      <div id="pour-text">Your drink is being poured</div>
+      <div id="pour-ready-text">Your drink is ready.<br>Enjoy!</div>
+      <div id="pour-stats">
+        <div class="pour-stat-block" id="pour-stat-left">
+          <div class="pour-stat-label">This tap has saved</div>
+          <div class="pour-stat-number">2,482</div>
+          <div class="pour-stat-unit">single use bottles</div>
+        </div>
+        <div class="pour-circlemark" id="pour-circlemark">
+          <img src="images/aqualibra-circlemark.svg" alt="Aqua Libra">
+        </div>
+        <div class="pour-stat-block" id="pour-stat-right">
+          <div class="pour-stat-label">Together we have saved</div>
+          <div class="pour-stat-number">86,238</div>
+          <div class="pour-stat-unit">single use bottles</div>
+        </div>
       </div>
     </div>
 
@@ -820,8 +870,13 @@
 
       // Clean up pouring if leaving that screen
       if (currentScreen === 'screen-pouring') {
-        resetPouringAnimations();
+        pourAnimActive = false;
         if (pourTimer) { clearTimeout(pourTimer); pourTimer = null; }
+        document.getElementById('pour-text').classList.remove('visible', 'dark');
+        document.getElementById('pour-ready-text').classList.remove('visible');
+        document.getElementById('pour-stat-left').classList.remove('light');
+        document.getElementById('pour-stat-right').classList.remove('light');
+        document.getElementById('pour-circlemark').classList.remove('light');
       }
 
       // 1. Exit current screen in the right direction
@@ -1062,52 +1117,163 @@
     function selectEnhance(type) {
       currentEnhance = type;
 
-      // Visual feedback: highlight selected card
+      const enhance = document.getElementById('screen-enhance');
+      const pouring = document.getElementById('screen-pouring');
+      const vid     = document.getElementById('app-video');
+
       document.querySelectorAll('.enhance-card').forEach(el => el.classList.remove('selected'));
-      if (type !== 'none') {
-        document.getElementById('enhance-' + type).classList.add('selected');
-      }
+      if (type !== 'none') document.getElementById('enhance-' + type).classList.add('selected');
 
-      // Brief delay for feedback, then start pouring
-      setTimeout(() => beginPouring(), 400);
+      setTimeout(() => {
+        pouring.classList.add('active');
+        currentScreen = 'screen-pouring';
+
+        beginPourAnimation(true);
+
+        requestAnimationFrame(() => {
+          enhance.classList.remove('active', 'entered');
+          vid.style.transition = 'none';
+          vid.style.clipPath   = '';
+          vid.classList.remove('video-revealed', 'video-exit');
+          vid.offsetHeight;
+          vid.style.transition = '';
+        });
+      }, 400);
     }
 
-    // ─── Actually start the pouring screen ───
-    function beginPouring() {
-      // Hot water uses free pour screen instead of timed pour
-      if (currentType === 'hot') {
-        goTo('screen-hot-pour');
-        return;
-      }
+    // ─── Wave pour animation ───
+    let pourAnimActive = false;
+    let pourAnimStart  = 0;
+    const POUR_DURATION = 5000;
 
-      const enhanceNames = { electrolytes: 'Electrolytes', vitamins: 'Vitamins', bvitamins: 'B Vitamins' };
-      const enhanceLabel = currentEnhance === 'none' ? '' : ' + ' + (enhanceNames[currentEnhance] || currentEnhance);
-      document.getElementById('pouring-detail').textContent =
-        `${currentSize}ml ${typeLabels[currentType]} · ${currentFlavour}${enhanceLabel}`;
+    const waveLayers = [
+      { speed: 0.9,  amp: 0.022, phaseX: 3.0, phaseOff: 0.0 },
+      { speed: 0.55, amp: 0.019, phaseX: 2.4, phaseOff: 2.8 },
+    ];
 
-      const fill = document.getElementById('pour-bar-fill');
-      fill.className = 'pour-bar-fill';
-      if (currentType === 'sparkling') fill.classList.add('aqua-bar');
-      else if (currentType === 'hot')  fill.classList.add('blush-bar');
-
-      resetPouringAnimations();
-      goTo('screen-pouring');
-
-      requestAnimationFrame(() => {
-        fill.style.animation = 'none';
-        requestAnimationFrame(() => { fill.style.animation = ''; });
-      });
-
-      pourTimer = setTimeout(() => {
-        document.getElementById('done-summary').textContent =
-          `${currentSize}ml ${typeLabels[currentType]} · ${currentFlavour}${currentEnhance !== 'none' ? ' + ' + (enhanceNames[currentEnhance] || currentEnhance) : ''}`;
-        goTo('screen-done');
-      }, 5800);
+    function waveY(x, layer, sec) {
+      const freq = (Math.PI * 2) / 1024;
+      return (
+        Math.sin(x * freq * layer.phaseX + sec * layer.speed + layer.phaseOff) * (600 * layer.amp) +
+        Math.sin(x * freq * (layer.phaseX + 1.8) - sec * layer.speed * 1.4 + 1.0) * (600 * layer.amp * 0.38)
+      );
     }
 
-    function resetPouringAnimations() {
-      const fill = document.getElementById('pour-bar-fill');
-      if (fill) { fill.style.animation = 'none'; fill.offsetHeight; }
+    function easeInOut(t) {
+      return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+
+    function beginPourAnimation(dropIn) {
+      const canvas     = document.getElementById('pour-canvas');
+      const ctx        = canvas.getContext('2d');
+      const pourText   = document.getElementById('pour-text');
+      const readyText  = document.getElementById('pour-ready-text');
+      const statLeft   = document.getElementById('pour-stat-left');
+      const statRight  = document.getElementById('pour-stat-right');
+      const circlemark = document.getElementById('pour-circlemark');
+      const video      = document.getElementById('pour-backdrop');
+      canvas.width = 1024; canvas.height = 600;
+      video.play().catch(() => {});
+
+      pourText.classList.remove('visible', 'dark');
+      readyText.classList.remove('visible');
+      statLeft.classList.remove('light');
+      statRight.classList.remove('light');
+      circlemark.classList.remove('light');
+
+      pourAnimActive = true;
+      let fillLevel  = dropIn ? 1.15 : 1.0;
+      let poured     = false;
+
+      statLeft.classList.add('light');
+      statRight.classList.add('light');
+      circlemark.classList.add('light');
+
+      if (dropIn) {
+        pourAnimStart = performance.now();
+        setTimeout(() => { pourText.classList.add('visible'); }, 800);
+      } else {
+        pourAnimStart = null;
+        setTimeout(() => { pourText.classList.add('visible'); }, 300);
+        setTimeout(() => { pourAnimStart = performance.now(); }, 3300);
+      }
+
+      function syncColors() {
+        const waveTopY = (1 - fillLevel) * 600;
+        pourText.classList.toggle('dark', waveTopY > 248);
+        const statsSubmerged = waveTopY < 464;
+        statLeft.classList.toggle('light',   statsSubmerged);
+        statRight.classList.toggle('light',  statsSubmerged);
+        circlemark.classList.toggle('light', statsSubmerged);
+      }
+
+      function loop() {
+        if (!pourAnimActive) return;
+        requestAnimationFrame(loop);
+
+        const now      = performance.now();
+        const sec      = now * 0.001;
+        const progress = pourAnimStart ? Math.min(1, (now - pourAnimStart) / POUR_DURATION) : 0;
+
+        fillLevel = dropIn
+          ? 1.15 - easeInOut(progress) * 1.23
+          : 1.0  - easeInOut(progress) * 1.08;
+        syncColors();
+
+        ctx.fillStyle = '#C5DBFC';
+        ctx.fillRect(0, 0, 1024, 600);
+
+        if ((1 - fillLevel) * 600 <= 600 + 600 * 0.07) {
+          const baseY = (1 - fillLevel) * 600;
+
+          const back = waveLayers[1];
+          ctx.beginPath();
+          ctx.moveTo(-2, baseY - 600 * 0.025 + waveY(0, back, sec));
+          for (let x = 3; x <= 1026; x += 3) {
+            ctx.lineTo(x, baseY - 600 * 0.025 + waveY(x, back, sec));
+          }
+          ctx.lineTo(1026, 602); ctx.lineTo(-2, 602);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(13,79,146,0.45)';
+          ctx.fill();
+
+          const front = waveLayers[0];
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(-2, baseY + waveY(0, front, sec));
+          for (let x = 3; x <= 1026; x += 3) {
+            ctx.lineTo(x, baseY + waveY(x, front, sec));
+          }
+          ctx.lineTo(1026, 602); ctx.lineTo(-2, 602);
+          ctx.closePath();
+          ctx.clip();
+          if (video.readyState >= 2) {
+            ctx.drawImage(video, 0, 0, 1024, 600);
+            ctx.fillStyle = 'rgba(13,79,146,0.62)';
+          } else {
+            ctx.fillStyle = '#0D4F92';
+          }
+          ctx.fillRect(-2, 0, 1028, 602);
+          ctx.restore();
+        }
+
+        if (progress >= 1 && !poured) {
+          poured = true;
+          pourAnimActive = false;
+          pourText.classList.remove('visible');
+          statLeft.classList.remove('light');
+          statRight.classList.remove('light');
+          circlemark.classList.remove('light');
+          ctx.fillStyle = '#C5DBFC';
+          ctx.fillRect(0, 0, 1024, 600);
+          setTimeout(() => {
+            readyText.classList.add('visible');
+            pourTimer = setTimeout(() => { goTo('screen-screensaver'); }, 5000);
+          }, 400);
+        }
+      }
+
+      requestAnimationFrame(loop);
     }
 
     // ─── Hot Free Pour: slide-to-pour interaction ───
